@@ -3,11 +3,9 @@
 const Post = require('../models/Post');
 const Profile = require('../models/Profile');
 
-const publish = async (req, res) => {};
-
 // Subscribe implementation
 const subscribe = async (req, res) => {
-  // get follower and followed one
+  // get follower and followed one from db
   const follower = await Profile.findOne({ email: res.locals.email });
   const followed = await Profile.findOne({ email: req.body.email });
 
@@ -15,11 +13,15 @@ const subscribe = async (req, res) => {
   const followerId = await follower._id;
   const followedId = await followed._id;
 
-  // add current user to subscribers array
-  if (followed.subscribers.includes(follower.email)) {
+  // add current user to followed one subscribers array
+  if (
+    followed.subscribers.includes(follower.email) ||
+    res.locals.email === req.body.email
+  ) {
     throw new Error("U've already following this user");
   }
   followed.subscribers.push(follower.email);
+  // creating object for mongoose query
   const newSubscriberAdded = {
     subscribers: followed.subscribers,
   };
@@ -34,6 +36,7 @@ const subscribe = async (req, res) => {
   const newSubcriptionAdded = {
     subscriptions: follower.subscriptions,
   };
+  // creating object for mongoose query
   const wasAdded = await Profile.findByIdAndUpdate(
     { _id: followerId },
     newSubcriptionAdded,
@@ -51,4 +54,4 @@ const deleteSubscriptions = async (req, res) => {
   res.status(200).send('delete subscriptions');
 };
 
-module.exports = { publish, subscribe, getSubscribers, deleteSubscriptions };
+module.exports = { subscribe, getSubscribers, deleteSubscriptions };

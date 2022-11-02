@@ -1,34 +1,47 @@
 const Post = require('../models/Post');
 const Profile = require('../models/Profile');
+// support functions
+const {
+  getSubsArrayAndPosts,
+  getPostsOnly,
+  sortCommonArray,
+} = require('../support_methods/post_logic');
 
-// Increment getting also follows post
+// TODO: Increment getting also follows post
 const getPosts = async (req, res) => {
-  // get current User s email
-  currentUser = await res.locals.email;
+  currentUserEmail = await res.locals.email;
+  const currentUser = await Profile.findOne({ email: currentUserEmail });
+  const userId = currentUser._id;
+  let commonPostArray = [];
 
-  // Get id from current user
-  const { _id: profileId } = await Profile.findOne({ email: currentUser });
+  //////////////////////////////////
 
-  let postArray;
-  let messArray;
-
-  // if query string have datetime
-  if (req.query.datetime) {
-    // get posts from certain date
-    date = req.query.datetime;
-
-    postArray = await Post.find({
-      createdAt: { $gte: date },
-      createdBy: profileId,
-    });
+  // if request have query string named date
+  if (!req.query.datetime) {
+    if (currentUser.subscriptions !== []) {
+      await getSubsArrayAndPosts(
+        commonPostArray,
+        currentUser.subscriptions,
+        currentUserEmail,
+        ''
+      );
+    } else {
+      await getPostsOnly(commonPostArray, userId);
+    }
   } else {
-    // Get only current user s 20 posts
-    postArray = await Post.find({ createdBy: profileId })
-      .sort({ createdAt: -1 })
-      .limit(20);
+    date = req.query.datetime;
+    await getSubsArrayAndPosts(
+      commonPostArray,
+      currentUser.subscriptions,
+      currentUserEmail,
+      date
+    );
   }
-  messArray = postArray.map((item) => item.message);
-  res.status(200).json({ messArray });
+
+  // Now we have common array of posts so we need to sort all of them and take last 20 of them
+  commonPostArray = await commonPostArray.flat();
+  commonPostArray = await sortCommonArray(commonPostArray);
+  await res.status(200).json(commonPostArray);
 };
 
 const createPost = async (req, res) => {
