@@ -1,7 +1,5 @@
 require('dotenv').config();
-const { profile } = require('console');
 const express = require('express');
-const { nextTick } = require('process');
 const app = express();
 
 // connectDB
