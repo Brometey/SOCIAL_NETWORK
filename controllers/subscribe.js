@@ -8,6 +8,9 @@ const subscribe = async (req, res) => {
   // get follower and followed one from db
   const follower = await Profile.findOne({ email: res.locals.email });
   const followed = await Profile.findOne({ email: req.body.email });
+  if (!followed) {
+    throw new Error('Cant find that email');
+  }
 
   //get followerId and followedId
   const followerId = await follower._id;
@@ -46,12 +49,43 @@ const subscribe = async (req, res) => {
   res.status(200).json({ addedTo, wasAdded });
 };
 
+const deleteSubs = async (req, res) => {
+  const currentUser = await Profile.findOne({ email: res.locals.email });
+  const currentId = currentUser._id;
+  for (let i = 0; i < currentUser.subscriptions.length; i++) {
+    const theOneWholostSub = await Profile.findOne({
+      email: currentUser.subscriptions[i],
+    });
+    const indexToDelete = await theOneWholostSub.subscribers.indexOf(
+      `${res.locals.email}`
+    );
+
+    theOneWholostSub.subscribers.splice(indexToDelete, 1);
+
+    await Profile.findByIdAndUpdate(
+      { _id: theOneWholostSub._id },
+      { subscribers: theOneWholostSub.subscribers },
+      { new: true, runValidators: true }
+    );
+  }
+
+  const deletedSubs = { subscriptions: [] };
+
+  const profile = await Profile.findByIdAndUpdate(
+    { _id: currentId },
+    // insert updated data
+    deletedSubs,
+    { new: true, runValidators: true }
+  );
+
+  res.status(200).json(profile);
+};
+
 const getSubscribers = async (req, res) => {
-  res.status(200).send('Get subscribers');
+  const currentUser = await Profile.findOne({ email: res.locals.email });
+  const subscribersArray = currentUser.subscribers;
+
+  res.status(200).json(subscribersArray);
 };
 
-const deleteSubscriptions = async (req, res) => {
-  res.status(200).send('delete subscriptions');
-};
-
-module.exports = { subscribe, getSubscribers, deleteSubscriptions };
+module.exports = { subscribe, getSubscribers, deleteSubs };

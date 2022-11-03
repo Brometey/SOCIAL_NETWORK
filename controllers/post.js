@@ -41,7 +41,8 @@ const getPosts = async (req, res) => {
   // Now we have common array of posts so we need to sort all of them and take last 20 of them
   commonPostArray = await commonPostArray.flat();
   commonPostArray = await sortCommonArray(commonPostArray);
-  await res.status(200).json(commonPostArray);
+
+  res.status(200).json({ commonPostArray, count: commonPostArray.length });
 };
 
 const createPost = async (req, res) => {
@@ -57,4 +58,5 @@ const createPost = async (req, res) => {
 
   res.status(201).json({ post });
 };
+
 module.exports = { getPosts, createPost };

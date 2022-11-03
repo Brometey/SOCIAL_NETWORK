@@ -4,13 +4,9 @@ const router = express.Router();
 const {
   subscribe,
   getSubscribers,
-  deleteSubscriptions,
+  deleteSubs,
 } = require('../controllers/subscribe');
 
-router
-  .route('/')
-  .get(getSubscribers)
-  .patch(subscribe)
-  .delete(deleteSubscriptions);
-
+router.route('/').get(getSubscribers).patch(subscribe);
+router.route('/delete').post(deleteSubs);
 module.exports = router;

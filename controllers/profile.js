@@ -30,7 +30,7 @@ const updateProfile = async (req, res) => {
   if (!profile) {
     throw new Error('No profile');
   }
-  res.status(200).json({ profile });
+  await res.status(200).json({ profile });
 };
 
 module.exports = { getProfile, updateProfile };
